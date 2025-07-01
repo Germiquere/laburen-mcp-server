@@ -24,5 +24,8 @@
 	},
 	"observability": {
 		"enabled": true
+	},
+	"vars": {
+		"LABUREN_DASHBOARD_URL": "https://dashboard.laburen.com"
 	}
 }
