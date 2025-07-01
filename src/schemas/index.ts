@@ -348,6 +348,14 @@ export const ListDatastoresInputSchema = z.object({
   page:  z.number().min(1).optional(),
   limit: z.number().min(1).max(100).optional(),
 });
+// ---------------------------------------------------------------------
+//  DATASTORE INPUT SCHEMAS
+// ---------------------------------------------------------------------
 export type ListDatastoresInputSchema = z.infer<
   typeof ListDatastoresInputSchema
 >;
+
+export const GetDatastoreInputSchema = z.object({
+  datastore_id: z.string().describe("Unique id of the datastore to retrieve"),
+});
+export type GetDatastoreInputSchema = z.infer<typeof GetDatastoreInputSchema>;
