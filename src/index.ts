@@ -1,6 +1,7 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { getAgentById } from "./helpers/agents";
 
 // Define our MCP agent with tools
 export class MyMCP extends McpAgent {
@@ -10,51 +11,20 @@ export class MyMCP extends McpAgent {
 	});
 
 	async init() {
-		// Simple addition tool
 		this.server.tool(
-			"add",
-			{ a: z.number(), b: z.number() },
-			async ({ a, b }) => ({
-				content: [{ type: "text", text: String(a + b) }],
-			})
-		);
-
-		// Calculator tool with multiple operations
-		this.server.tool(
-			"calculate",
-			{
-				operation: z.enum(["add", "subtract", "multiply", "divide"]),
-				a: z.number(),
-				b: z.number(),
+			'get_agent_by_id',
+			'Fetches detailed information about a specific Laburen agent by its unique id or handle. Use this to retrieve the agents metadata, configuration, and available tools. Requires a valid API key for authentication.',
+			{ agent_id: z.string().describe('The unique id or handle of the agent') },
+			async ({ agent_id }) => {
+			  const apiKey = (this as unknown as MyMCP).props?.api_key;
+			  try {
+				const agent = await getAgentById({ agentId: agent_id, apiKey: apiKey as string, baseUrl: (this.env as any).LABUREN_DASHBOARD_URL });
+				return { content: [{ type: 'text', text: `Agent: ${JSON.stringify(agent)}` }] };
+			  } catch (err: any) {
+				return { content: [{ type: 'text', text: `${err.message}` }] };
+			  }
 			},
-			async ({ operation, a, b }) => {
-				let result: number;
-				switch (operation) {
-					case "add":
-						result = a + b;
-						break;
-					case "subtract":
-						result = a - b;
-						break;
-					case "multiply":
-						result = a * b;
-						break;
-					case "divide":
-						if (b === 0)
-							return {
-								content: [
-									{
-										type: "text",
-										text: "Error: Cannot divide by zero",
-									},
-								],
-							};
-						result = a / b;
-						break;
-				}
-				return { content: [{ type: "text", text: String(result) }] };
-			}
-		);
+		  );
 	}
 }
 
@@ -65,6 +35,7 @@ export default {
 		if (!providedKey) {
 			return new Response("Unauthorized", { status: 401 });
 		}
+		console.log('env', env);
 		const url = new URL(request.url);
 
 		// --- Inyectamos la API key en las `props` del ExecutionContext ---
@@ -74,7 +45,7 @@ export default {
 				api_key: providedKey,
 			},
 		});
-
+		console.log('context', context);
 		if (url.pathname === "/sse" || url.pathname === "/sse/message") {
 			return MyMCP.serveSSE("/sse").fetch(request, env, context);
 		}
