@@ -359,3 +359,8 @@ export const GetDatastoreInputSchema = z.object({
   datastore_id: z.string().describe("Unique id of the datastore to retrieve"),
 });
 export type GetDatastoreInputSchema = z.infer<typeof GetDatastoreInputSchema>;
+
+export const DeleteDatastoreInputSchema = z.object({
+  datastore_id: z.string().describe("Unique id of the datastore to delete"),
+});
+export type DeleteDatastoreInput = z.infer<typeof DeleteDatastoreInputSchema>;

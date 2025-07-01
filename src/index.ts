@@ -2,8 +2,8 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { createAgent, deleteAgentById, getAgentById, listAgents, updateAgentById } from "./helpers/agents";
-import { CreateAgentInputSchema, DeleteAgentInputSchema, GetDatastoreInputSchema, ListAgentsInputSchema, ListDatastoresInputSchema, UpdateAgentInputSchema } from "./schemas";
-import { getDatastoreById, listDatastores } from "./helpers/datastores";
+import { CreateAgentInputSchema, DeleteAgentInputSchema, DeleteDatastoreInputSchema, GetDatastoreInputSchema, ListAgentsInputSchema, ListDatastoresInputSchema, UpdateAgentInputSchema } from "./schemas";
+import { deleteDatastoreById, getDatastoreById, listDatastores } from "./helpers/datastores";
 
 // Define our MCP agent with tools
 export class MyMCP extends McpAgent {
@@ -169,7 +169,29 @@ export class MyMCP extends McpAgent {
 				return { content: [{ type: "text", text: err.message }] };
 			  }
 			},
-		  );
+		);
+		this.server.tool(
+			"delete_datastore",
+			"Deletes a specific Laburen datastore by its unique id. Requires a valid API key.",
+			DeleteDatastoreInputSchema.shape,
+			async ({ datastore_id }) => {
+			  const apiKey = (this as any).props?.api_key;
+			  try {
+				await deleteDatastoreById({
+				  datastoreId: datastore_id,
+				  apiKey : apiKey as string,
+				  baseUrl: (this.env as any).LABUREN_DASHBOARD_URL,
+				});
+				return {
+				  content: [
+					{ type: "text", text: `Datastore ${datastore_id} deleted successfully.` },
+				  ],
+				};
+			  } catch (err: any) {
+				return { content: [{ type: "text", text: err.message }] };
+			  }
+			},
+		);
 	}
 }
 
