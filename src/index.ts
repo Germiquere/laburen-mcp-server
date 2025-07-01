@@ -2,8 +2,8 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { createAgent, deleteAgentById, getAgentById, listAgents, updateAgentById } from "./helpers/agents";
-import { CreateAgentInputSchema, DeleteAgentInputSchema, DeleteDatastoreInputSchema, GetDatastoreInputSchema, ListAgentsInputSchema, ListDatastoresInputSchema, UpdateAgentInputSchema } from "./schemas";
-import { deleteDatastoreById, getDatastoreById, listDatastores } from "./helpers/datastores";
+import { CreateAgentInputSchema, CreateDatastoreRequestSchema, DeleteAgentInputSchema, DeleteDatastoreInputSchema, GetDatastoreInputSchema, ListAgentsInputSchema, ListDatastoresInputSchema, UpdateAgentInputSchema, UpdateDatastoreRequestSchema } from "./schemas";
+import { createDatastore, deleteDatastoreById, getDatastoreById, listDatastores, updateDatastoreById } from "./helpers/datastores";
 
 // Define our MCP agent with tools
 export class MyMCP extends McpAgent {
@@ -185,6 +185,52 @@ export class MyMCP extends McpAgent {
 				return {
 				  content: [
 					{ type: "text", text: `Datastore ${datastore_id} deleted successfully.` },
+				  ],
+				};
+			  } catch (err: any) {
+				return { content: [{ type: "text", text: err.message }] };
+			  }
+			},
+		);
+		this.server.tool(
+		  'create_datastore',
+		  'Creates a new Laburen datastore. Provide name, type, and optional description/config.',
+		  CreateDatastoreRequestSchema.shape,
+		  async (fields) => {
+			const apiKey = (this as any).props?.api_key;
+			try {
+			  const datastore = await createDatastore({
+				apiKey,
+				baseUrl: (this.env as any).LABUREN_DASHBOARD_URL,
+				data   : fields,
+			  });
+			  return {
+				content: [
+				  { type: 'text', text: `Datastore created: ${JSON.stringify(datastore)}` },
+				],
+			  };
+			} catch (err: any) {
+			  return { content: [{ type: 'text', text: err.message }] };
+			}
+		  },
+		);
+		this.server.tool(
+			"update_datastore",
+			"Updates an existing Laburen datastore. Provide datastore_id and any fields you wish to change.",
+			{ datastore_id: z.string(), ...UpdateDatastoreRequestSchema.shape },
+			// @ts-ignore – dynamic shape merges are safe at runtime
+			async ({ datastore_id, ...fields }: any) => {
+			  const apiKey = (this as any).props?.api_key;
+			  try {
+				const datastore = await updateDatastoreById({
+				  datastoreId: datastore_id,
+				  apiKey,
+				  baseUrl: (this.env as any).LABUREN_DASHBOARD_URL,
+				  data: { ...fields },
+				});
+				return {
+				  content: [
+					{ type: "text", text: `Datastore updated: ${JSON.stringify(datastore)}` },
 				  ],
 				};
 			  } catch (err: any) {

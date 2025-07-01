@@ -364,3 +364,56 @@ export const DeleteDatastoreInputSchema = z.object({
   datastore_id: z.string().describe("Unique id of the datastore to delete"),
 });
 export type DeleteDatastoreInput = z.infer<typeof DeleteDatastoreInputSchema>;
+export enum DatastoreType {
+  qdrant    = 'qdrant',
+  typesense = 'typesense',
+}
+
+export const PineconeConfigSchema = z.object({
+  apiKey   : z.string().trim().min(3),
+  indexName: z.string().trim().optional(),
+  region   : z.string().trim().default('us-east1-gcp'),
+});
+
+export const QdrantConfigSchema = z.object({ /* por ahora vacío */ });
+
+/**
+ * Esquema base del Datastore
+ */
+export const DatastoreSchema = z.object({
+  id  : z.string().trim().optional(),                // Solo en update
+  type: z.nativeEnum(DatastoreType),                 // 🔑 pinecone | qdrant | typesense
+  config: z.object({}).optional(),                   // Se especializa abajo
+  name       : z.string().trim().optional(),
+  description: z.string().trim().optional().nullable(),
+
+  // Metadatos opcionales para el “plugin” de Laburen
+  pluginIconUrl             : z.string().trim().optional().nullable(),
+  pluginName                : z.string().trim().max(20).optional().nullable(),
+  pluginDescriptionForHumans: z.string().trim().max(100).optional().nullable(),
+  pluginDescriptionForModel : z.string().trim().max(8000).optional().nullable(),
+
+  isPublic: z.boolean().optional(),                  // Visibilidad
+});
+
+export const QdrantSchema = DatastoreSchema.extend({
+  config: QdrantConfigSchema, // Obligatorio aunque sea {}
+});
+
+/**
+ * DTO para CREAR un Datastore
+ */
+export const CreateDatastoreRequestSchema = DatastoreSchema.extend({
+  id: z.string().trim().cuid().optional(), // back-compat
+});
+export type CreateDatastoreRequestSchema =
+  z.infer<typeof CreateDatastoreRequestSchema>;
+
+/**
+ * DTO para ACTUALIZAR un Datastore
+ * (todos los campos opcionales → PATCH semantics)
+ */
+export const UpdateDatastoreRequestSchema =
+  CreateDatastoreRequestSchema.partial();
+export type UpdateDatastoreRequestSchema =
+  z.infer<typeof UpdateDatastoreRequestSchema>;
