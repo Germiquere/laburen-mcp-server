@@ -2,7 +2,8 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { createAgent, deleteAgentById, getAgentById, listAgents, updateAgentById } from "./helpers/agents";
-import { CreateAgentInputSchema, DeleteAgentInputSchema, ListAgentsInputSchema, UpdateAgentInputSchema } from "./schemas";
+import { CreateAgentInputSchema, DeleteAgentInputSchema, ListAgentsInputSchema, ListDatastoresInputSchema, UpdateAgentInputSchema } from "./schemas";
+import { listDatastores } from "./helpers/datastores";
 
 // Define our MCP agent with tools
 export class MyMCP extends McpAgent {
@@ -12,6 +13,9 @@ export class MyMCP extends McpAgent {
 	});
 
 	async init() {
+		/**
+		 * AGENT TOOLS
+		 */
 		this.server.tool(
 			'get_agent_by_id',
 			'Fetches detailed information about a specific Laburen agent by its unique id or handle. Use this to retrieve the agents metadata, configuration, and available tools. Requires a valid API key for authentication.',
@@ -113,6 +117,32 @@ export class MyMCP extends McpAgent {
 					  type: "text",
 					  text: JSON.stringify(agents),
 					},
+				  ],
+				};
+			  } catch (err: any) {
+				return { content: [{ type: "text", text: err.message }] };
+			  }
+			}
+		);
+		/**
+		 * DATASTORE TOOLS
+		 */
+		this.server.tool(
+			"get_datastores",
+			"Retrieves the list of all datastores in the authenticated organization. Supports optional pagination with page and limit.",
+			ListDatastoresInputSchema.shape,
+			async ({ page, limit }) => {
+			  const apiKey = (this as any).props?.api_key;
+			  try {
+				const datastores = await listDatastores({
+				  apiKey:  apiKey as string,
+				  baseUrl: (this.env as any).LABUREN_DASHBOARD_URL,
+				  page,
+				  limit,
+				});
+				return {
+				  content: [
+					{ type: "text", text: JSON.stringify(datastores) },
 				  ],
 				};
 			  } catch (err: any) {

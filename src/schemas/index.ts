@@ -343,3 +343,11 @@ export const ListAgentsInputSchema = z.object({
   limit: z.number().min(1).max(100).optional(),
 });
 export type ListAgentsInputSchema = z.infer<typeof ListAgentsInputSchema>;
+
+export const ListDatastoresInputSchema = z.object({
+  page:  z.number().min(1).optional(),
+  limit: z.number().min(1).max(100).optional(),
+});
+export type ListDatastoresInputSchema = z.infer<
+  typeof ListDatastoresInputSchema
+>;
